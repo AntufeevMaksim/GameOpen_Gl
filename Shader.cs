@@ -3,7 +3,7 @@ using OpenTK.Graphics.ES20;
 
 public class Shader
 {
-  int Handle;
+  public int Handle;
   private bool disposedValue = false;
   public Shader(string vertexPath, string fragmentPath)
   {
