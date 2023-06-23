@@ -8,11 +8,11 @@ namespace Input
   {
     
     
-    public InputData(bool[] keys, Vector2 delta_mouse_pos, Vector2 delta_mouse_scroll)
+    public InputData(bool[] keys, Vector2 deltaMousePos, Vector2 deltaMouseScroll)
     {
       Keys = keys;
-      DeltaMousePosition = delta_mouse_pos;
-      DeltaMouseScroll = delta_mouse_scroll;
+      DeltaMousePosition = deltaMousePos;
+      DeltaMouseScroll = deltaMouseScroll;
     }
 
     public bool[] Keys { get; private set; }
@@ -27,10 +27,10 @@ namespace Input
     bool[] _keys = new bool[1024];
     Vector2 _deltaMousePos;
     Vector2 _deltaMouseScroll;
-    public InputCallback(KeyboardState keyboard_input, MouseState mouse_state)
+    public InputCallback(KeyboardState keyboardInput, MouseState mouseState)
     {
-      _keyboardInput = keyboard_input;
-      _mouseState = mouse_state;
+      _keyboardInput = keyboardInput;
+      _mouseState = mouseState;
     }
 
     public InputData GetInputData()

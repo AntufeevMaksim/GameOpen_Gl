@@ -30,17 +30,19 @@ public class Game : GameWindow
 
   InputCallback _input;
 
-  float _yaw = -90.0f;
-  float _pitch = 0.0f;
-  float _fov = 45.0f;
+  // float _yaw = -90.0f;
+  // float _pitch = 0.0f;
+  // float _fov = 45.0f;
 //  bool[] _keys = new bool[1024];
 
-  Vector3 _cameraPos = new(0.0f, 0.0f, 0.0f);
-  Vector3 _cameraFront = new(0.0f, -1.0f, -1.0f);
-  Vector3 _cameraUp = new(0.0f, 1.0f, 0.0f);
+  // Vector3 _cameraPos = new(0.0f, 0.0f, 0.0f);
+  // Vector3 _cameraFront = new(0.0f, -1.0f, -1.0f);
+  // Vector3 _cameraUp = new(0.0f, 1.0f, 0.0f);
 
   float _lastFrame = 0.0f;
   float _deltaTime = 0.0f;
+
+  Camera _camera;
 
   Stopwatch _timer = new Stopwatch();
   public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (width, height), Title = title }) { }
@@ -162,6 +164,7 @@ public class Game : GameWindow
 
 //    _input = KeyboardState;
     _input = new InputCallback(KeyboardState, MouseState);
+    _camera = new Camera(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, -1.0f, -1.0f), new Vector3(0.0f, 1.0f, 0.0f));
     CursorState = CursorState.Grabbed;
     _timer.Start();
 
@@ -182,24 +185,27 @@ public class Game : GameWindow
 
     InputData input_data = _input.GetInputData();
 
+    _camera.Update(input_data, _deltaTime);
+    Matrix4 view = _camera.GetLookAt();
+    Matrix4 projection = _camera.GetProjection();
     // KeyCallback();
-    DoMovement(input_data);
+    // DoMovement(input_data);
     // MouseCallback();
-    DoRotating(input_data);
+    // DoRotating(input_data);
 
     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
 
-    Matrix4 view = Matrix4.LookAt(_cameraPos,
-         _cameraPos + _cameraFront,
-         _cameraUp);
+    // Matrix4 view = Matrix4.LookAt(_cameraPos,
+    //      _cameraPos + _cameraFront,
+    //      _cameraUp);
 
     // Matrix4 view = LookAt(_cameraPos,
     //      _cameraPos + _cameraFront,
     //      _cameraUp);
     Matrix4 rotation = Matrix4.CreateFromAxisAngle(new Vector3(0, 1, 1), MathHelper.DegreesToRadians(0 * (float)_timer.Elapsed.TotalSeconds));
     Matrix4 model = Matrix4.CreateRotationX(MathHelper.DegreesToRadians(0 * (float)_timer.Elapsed.TotalSeconds));
-    Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(_fov), 800 / 600, 0.1f, 100.0f);
+//    Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(_fov), 800 / 600, 0.1f, 100.0f);
     Matrix4 trans = rotation * view * projection;
 
     _shader.Use();
@@ -236,105 +242,6 @@ public class Game : GameWindow
     GL.Viewport(0, 0, e.Width, e.Width);
   }
 
-  // protected void KeyCallback()
-  // {
-
-  //   List<Keys> tracked_keys = new List<Keys> { Keys.W, Keys.S, Keys.D, Keys.A };
-
-  //   foreach (Keys key in tracked_keys)
-  //   {
-  //     if (_input.IsKeyPressed(key))
-  //     {
-  //       _keys[(int)key] = true;
-  //     }
-  //     else if (_input.IsKeyReleased(key))
-  //     {
-  //       _keys[(int)key] = false;
-  //     }
-  //   }
-  // }
-
-  private void DoMovement(InputData inputData)
-  {
-    float camera_speed = 0.02f;
-
-    if (inputData.Keys[(int)Keys.W])
-    {
-      _cameraPos += _cameraFront * camera_speed * _deltaTime;
-    }
-    if (inputData.Keys[(int)Keys.S])
-    {
-      _cameraPos -= _cameraFront * camera_speed * _deltaTime;
-    }
-    if (inputData.Keys[(int)Keys.D])
-    {
-      _cameraPos += Vector3.Cross(_cameraFront, _cameraUp) * camera_speed * _deltaTime;
-    }
-    if (inputData.Keys[(int)Keys.A])
-    {
-      _cameraPos += Vector3.Cross(_cameraUp, _cameraFront) * camera_speed * _deltaTime;
-    }
-  }
-
-  private void DoRotating(InputData input_data)
-  {
-    float sensitivity = 0.04f;
-    _pitch -= input_data.DeltaMousePosition.Y * sensitivity;
-    _yaw += input_data.DeltaMousePosition.X * sensitivity;
-
-    if (_pitch > 89.0f)
-      _pitch = 89.0f;
-    if (_pitch < -89.0f)
-      _pitch = -89.0f;
-
-    float pitch = MathHelper.DegreesToRadians(_pitch);
-    float yaw = MathHelper.DegreesToRadians(_yaw);
-
-    Vector3 direction = new Vector3();
-    direction.X = (float)(Math.Cos(pitch) * Math.Cos(yaw));
-    direction.Y = (float)(Math.Sin(pitch));
-    direction.Z = (float)(Math.Cos(pitch) * Math.Sin(yaw));
-
-    _cameraFront = Vector3.Normalize(direction);
-  }
-
-  // private void MouseCallback()
-  // {
-  //   _deltaMousePos.X = MousePosition.X - _lastMousePos.X;
-  //   _deltaMousePos.Y = MousePosition.Y - _lastMousePos.Y;
-  //   _lastMousePos = MousePosition;
-
-  // }
-
-  protected override void OnMouseWheel(MouseWheelEventArgs e)
-  {
-    base.OnMouseWheel(e);
 
 
-    _fov -= e.OffsetY;
-
-    if (_fov >= 45.0f)
-    {
-      _fov = 45.0f;
-    }
-    else if (_fov <= 1.0f)
-    {
-      _fov = 1.0f;
-    }
-
-  }
-
-//   private Matrix4 LookAt(Vector3 eye, Vector3 target, Vector3 up)
-//   {
-//     Vector3 z_axis = Vector3.Normalize(eye - target);
-//     Vector3 x_axis = Vector3.Normalize(Vector3.Cross(Vector3.Normalize(up), z_axis));
-//     Vector3 y_axis = Vector3.Normalize(Vector3.Cross(z_axis, x_axis));
-
-//     Matrix4 rotation = new Matrix4(new Vector4(x_axis,0), new Vector4(y_axis, 0), new Vector4(z_axis, 0), new Vector4(0, 0, 0, 1));
-// //    Matrix4 coordinate_space = new Matrix4(new Vector4(x_axis.X, y_axis.X, z_axis.X, 0), new Vector4(x_axis.Y, y_axis.Y, z_axis.Y, 0), new Vector4(x_axis.Z, y_axis.Z, z_axis.Z, 0), new Vector4(0, 0, 0, 1));
-//     Matrix4 translation = new Matrix4(new Vector4(1, 0, 0, -eye.X), new Vector4(0, 1, 0, -eye.Y), new Vector4(0, 0, 1, -eye.Z), new Vector4(0, 0, 0, 1));
-
-//     return rotation * translation;
-
-//   }
 }

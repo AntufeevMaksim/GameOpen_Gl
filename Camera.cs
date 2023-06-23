@@ -1,6 +1,8 @@
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
+using Input;
+
 class Camera
 {
   Vector3 _pos = new(0.0f, 0.0f, 0.0f);
@@ -12,7 +14,7 @@ class Camera
 
   bool[] _keys = new bool[1024];
 
-  Camera(Vector3 pos, Vector3 direction, Vector3 up, float fov = 45.0f, float yaw = -90.0f, float pitch = 0.0f)
+  public Camera(Vector3 pos, Vector3 direction, Vector3 up, float fov = 45.0f, float yaw = -90.0f, float pitch = 0.0f)
   {
     _pos = pos;
     _direction = direction;
@@ -27,58 +29,45 @@ class Camera
     return Matrix4.LookAt(_pos, _pos + _direction, _up);
   }
 
-  public void Update(KeyboardState input)
+  public Matrix4 GetProjection()
   {
-    KeyCallback(input);
-    DoMovement();
+    return Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(_fov), 800 / 600, 0.1f, 100.0f);
+  }
+  public void Update(InputData input, float deltaTime)
+  {
+    DoMovement(input, deltaTime);
+    DoRotating(input, deltaTime);
+
   }
 
 
-  protected void KeyCallback(KeyboardState input)
-  {
-
-    List<Keys> tracked_keys = new List<Keys> { Keys.W, Keys.S, Keys.D, Keys.A };
-
-    foreach (Keys key in tracked_keys)
-    {
-      if (input.IsKeyPressed(key))
-      {
-        _keys[(int)key] = true;
-      }
-      else if (input.IsKeyReleased(key))
-      {
-        _keys[(int)key] = false;
-      }
-    }
-  }
-
-  private void DoMovement()
+  private void DoMovement(InputData input, float delta_time)
   {
     float camera_speed = 0.02f;
 
-    if (_keys[(int)Keys.W])
+    if (input.Keys[(int)Keys.W])
     {
-      _pos += _direction * camera_speed * _deltaTime;
+      _pos += _direction * camera_speed * delta_time;
     }
-    if (_keys[(int)Keys.S])
+    if (input.Keys[(int)Keys.S])
     {
-      _pos -= _direction * camera_speed * _deltaTime;
+      _pos -= _direction * camera_speed * delta_time;
     }
-    if (_keys[(int)Keys.D])
+    if (input.Keys[(int)Keys.D])
     {
-      _pos += Vector3.Cross(_direction, _up) * camera_speed * _deltaTime;
+      _pos += Vector3.Cross(_direction, _up) * camera_speed * delta_time;
     }
-    if (_keys[(int)Keys.A])
+    if (input.Keys[(int)Keys.A])
     {
-      _pos += Vector3.Cross(_up, _direction) * camera_speed * _deltaTime;
+      _pos += Vector3.Cross(_up, _direction) * camera_speed * delta_time;
     }
   }
 
-  private void DoRotating()
+  private void DoRotating(InputData input, float delta_time)
   {
     float sensitivity = 0.04f;
-    _pitch -= _deltaMousePos.Y * sensitivity;
-    _yaw += _deltaMousePos.X * sensitivity;
+    _pitch -= input.DeltaMousePosition.Y * sensitivity;
+    _yaw += input.DeltaMousePosition.X * sensitivity;
 
     if (_pitch > 89.0f)
       _pitch = 89.0f;
@@ -96,29 +85,4 @@ class Camera
     _direction = Vector3.Normalize(direction);
   }
 
-  private void MouseCallback()
-  {
-    _deltaMousePos.X = MousePosition.X - _lastMousePos.X;
-    _deltaMousePos.Y = MousePosition.Y - _lastMousePos.Y;
-    _lastMousePos = MousePosition;
-
-  }
-
-  protected override void OnMouseWheel(MouseWheelEventArgs e)
-  {
-    base.OnMouseWheel(e);
-
-
-    _fov -= e.OffsetY;
-
-    if (_fov >= 45.0f)
-    {
-      _fov = 45.0f;
-    }
-    else if (_fov <= 1.0f)
-    {
-      _fov = 1.0f;
-    }
-
-  }
 }
