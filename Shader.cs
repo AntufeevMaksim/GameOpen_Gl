@@ -1,5 +1,6 @@
 
 using OpenTK.Graphics.ES20;
+using OpenTK.Mathematics;
 
 public class Shader
 {
@@ -54,6 +55,28 @@ public class Shader
     GL.DeleteShader(FragmentShader);
     GL.DeleteShader(VertexShader);
   }
+  public void SetInt(string name, int value)
+  {
+    int location = GL.GetUniformLocation(Handle, name);
+
+    GL.Uniform1(location, value);
+  }
+
+  public void SetFloat(string name, float value)
+  {
+    int location = GL.GetUniformLocation(Handle, name);
+
+    GL.Uniform1(location, value);    
+  }
+
+  public void SetMat4(string name, Matrix4 value)
+  {
+    int location = GL.GetUniformLocation(Handle, name);
+
+    GL.UniformMatrix4(location, true, ref value);
+  }
+
+
   public void Use()
   {
     GL.UseProgram(Handle);
