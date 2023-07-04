@@ -5,8 +5,6 @@ using Input;
 
 class Camera
 {
-  Vector3 _pos = new(0.0f, 0.0f, 0.0f);
-  Vector3 _direction = new(0.0f, -1.0f, -1.0f);
   Vector3 _up = new(0.0f, 1.0f, 0.0f);
   float _yaw = -90.0f;
   float _pitch = 0.0f;
@@ -14,10 +12,13 @@ class Camera
 
   bool[] _keys = new bool[1024];
 
+  public Vector3 Pos { get; private set ; }
+  public Vector3 Direction { get; private set; }
+
   public Camera(Vector3 pos, Vector3 direction, Vector3 up, float fov = 45.0f, float yaw = -90.0f, float pitch = 0.0f)
   {
-    _pos = pos;
-    _direction = direction;
+    Pos = pos;
+    Direction = direction;
     _up = up;
     _yaw = yaw;
     _pitch = pitch;
@@ -26,7 +27,7 @@ class Camera
 
   public Matrix4 GetLookAt()
   {
-    return Matrix4.LookAt(_pos, _pos + _direction, _up);
+    return Matrix4.LookAt(Pos, Pos + Direction, _up);
   }
 
   public Matrix4 GetProjection()
@@ -37,29 +38,29 @@ class Camera
   {
     DoMovement(input, deltaTime);
     DoRotating(input, deltaTime);
-
+    ChangeFov(input);
   }
 
 
   private void DoMovement(InputData input, float delta_time)
   {
-    float camera_speed = 0.02f;
+    float camera_speed = 0.01f;
 
     if (input.Keys[(int)Keys.W])
     {
-      _pos += _direction * camera_speed * delta_time;
+      Pos += Direction * camera_speed * delta_time;
     }
     if (input.Keys[(int)Keys.S])
     {
-      _pos -= _direction * camera_speed * delta_time;
+      Pos -= Direction * camera_speed * delta_time;
     }
     if (input.Keys[(int)Keys.D])
     {
-      _pos += Vector3.Cross(_direction, _up) * camera_speed * delta_time;
+      Pos += Vector3.Cross(Direction, _up) * camera_speed * delta_time;
     }
     if (input.Keys[(int)Keys.A])
     {
-      _pos += Vector3.Cross(_up, _direction) * camera_speed * delta_time;
+      Pos += Vector3.Cross(_up, Direction) * camera_speed * delta_time;
     }
   }
 
@@ -82,7 +83,21 @@ class Camera
     direction.Y = (float)(Math.Sin(pitch));
     direction.Z = (float)(Math.Cos(pitch) * Math.Sin(yaw));
 
-    _direction = Vector3.Normalize(direction);
+    Direction = Vector3.Normalize(direction);
+  }
+
+  private void ChangeFov(InputData input)
+  {
+    _fov -= input.DeltaMouseScroll.Y;
+
+    if (_fov > 45.0f)
+    {
+      _fov = 45.0f; 
+    }
+    else if (_fov < 1.0f)
+    {
+      _fov = 1.0f;
+    }
   }
 
 }
