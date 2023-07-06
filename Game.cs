@@ -49,14 +49,14 @@ public class Game : GameWindow
     new Vector3( 1.5f,  0.2f, -1.5f),
     new Vector3(-1.3f,  1.0f, -1.5f),
     new Vector3(2.0f,  1.0f, 10.5f)
-    // new Vector3(3.0f, 0.0f, 0.0f),
-    // new Vector3(0.0f, 0.0f, 3.0f),
-    // new Vector3(-3.0f, 0.0f, 0.0f),
-    // new Vector3(0.0f, 0.0f, -3.0f),
-
-
     };
 
+  List<Vector3> _pointLightPositions = new List<Vector3>{
+    new Vector3( 0.7f,  0.2f,  2.0f),
+    new Vector3( 2.3f, -3.3f, -4.0f),
+    new Vector3(-4.0f,  2.0f, -12.0f),
+    new Vector3( 0.0f,  0.0f, -3.0f)
+  };
 
   public Game(int width, int height, string title) : base(GameWindowSettings.Default, new NativeWindowSettings() { Size = (width, height), Title = title }) { }
 
@@ -83,7 +83,7 @@ public class Game : GameWindow
   {
     base.OnLoad();
 
-    GL.ClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    GL.ClearColor(0.0f, 0.01f, 0.1f, 1.0f);
 
 
     float[] vertices = {
@@ -236,24 +236,28 @@ public class Game : GameWindow
     float x_pos = (float)Math.Sin(MathHelper.DegreesToRadians(15 * _timer.Elapsed.TotalSeconds));
     float y_pos = (float)Math.Cos(MathHelper.DegreesToRadians(15 * _timer.Elapsed.TotalSeconds));
 
-    _shader.SetVec3("pLight.ambient", new Vector3(0.1f, 0.1f, 0.1f));
-    _shader.SetVec3("pLight.diffuse", new Vector3(1.0f, 1.0f, 1.0f)); // darken the light a bit to fit the scene
-    _shader.SetVec3("pLight.specular", new Vector3(1.0f, 1.0f, 1.0f));
-    _shader.SetVec3("pLight.position", _lightPos);
-    _shader.SetFloat("pLight.constant",  1.0f);
-    _shader.SetFloat("pLight.linear",    0.14f);
-    _shader.SetFloat("pLight.quadratic", 0.07f);
 
+    for (int i = 0; i < _pointLightPositions.Count; i++)
+    {
 
+      _shader.SetVec3(String.Format("pointLights[{0}].ambient", i), new Vector3(0.1f, 0.1f, 0.1f));
+      _shader.SetVec3(String.Format("pointLights[{0}].diffuse", i), new Vector3(0.9f, 1.0f, 1.0f)); // darken the light a bit to fit the scene
+      _shader.SetVec3(String.Format("pointLights[{0}].specular", i), new Vector3(0.9f, 1.0f, 1.0f));
+      _shader.SetFloat(String.Format("pointLights[{0}].constant", i), 1.0f);
+      _shader.SetFloat(String.Format("pointLights[{0}].linear", i), 0.09f);
+      _shader.SetFloat(String.Format("pointLights[{0}].quadratic", i), 0.032f);
+      _shader.SetVec3(String.Format("pointLights[{0}].position", i), _pointLightPositions[i]);
+    }
     _shader.SetVec3("dirLight.direction", new Vector3(1.0f, 0.0f, 0.5f));
     _shader.SetVec3("dirLight.diffuse", new Vector3(1.0f, 0.0f, 0.0f));
 
     _shader.SetVec3("spotlight.position", _camera.Pos);
     _shader.SetVec3("spotlight.direction", _camera.Direction);
-    _shader.SetFloat("spotlight.phi", (float)Math.Cos(MathHelper.DegreesToRadians(12.5f)));
+    _shader.SetFloat("spotlight.inner_corner", (float)Math.Cos(MathHelper.DegreesToRadians(2.5f)));
+    _shader.SetFloat("spotlight.outer_corner", (float)Math.Cos(MathHelper.DegreesToRadians(5.5f)));
     _shader.SetVec3("spotlight.ambient", new Vector3(0.1f, 0.1f, 0.1f));
     _shader.SetVec3("spotlight.diffuse", new Vector3(1.0f, 1.0f, 1.0f)); // darken the light a bit to fit the scene
-    _shader.SetVec3("spotlight.specular", new Vector3(1.0f, 1.0f, 1.0f));    
+    _shader.SetVec3("spotlight.specular", new Vector3(1.0f, 1.0f, 1.0f));
 
     GL.BindVertexArray(_vertexArrayObject);
 
@@ -275,16 +279,19 @@ public class Game : GameWindow
 
 
     //lamp
-    Matrix4 lamp_model = Matrix4.CreateScale(0.2f);
-    lamp_model *= Matrix4.CreateTranslation(_lightPos);
 
     _lampShader.Use();
-    //    _lampShader.SetFloat("mix_coefficient", _mixCoefficient);
     _lampShader.SetMat4("projection", projection);
     _lampShader.SetMat4("view", view);
-    _lampShader.SetMat4("model", lamp_model);
 
-    GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
+    foreach (Vector3 pos in _pointLightPositions)
+    {
+      Matrix4 lamp_model = Matrix4.CreateScale(0.2f);
+      lamp_model *= Matrix4.CreateTranslation(pos);
+      _lampShader.SetMat4("model", lamp_model);
+
+      GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
+    }
 
 
     Context.SwapBuffers();
@@ -297,7 +304,7 @@ public class Game : GameWindow
   {
     base.OnResize(e);
 
-    GL.Viewport(0, (e.Height - e.Width)/2, e.Width, e.Width);
+    GL.Viewport(0, (e.Height - e.Width) / 2, e.Width, e.Width);
   }
 
 
